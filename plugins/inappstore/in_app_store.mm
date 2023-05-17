@@ -335,8 +335,6 @@ void InAppStore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("restore_purchases"), &InAppStore::restore_purchases);
 	ClassDB::bind_method(D_METHOD("purchase"), &InAppStore::purchase);
 
-	ClassDB::bind_method(D_METHOD("get_pending_event_count"), &InAppStore::get_pending_event_count);
-	ClassDB::bind_method(D_METHOD("pop_pending_event"), &InAppStore::pop_pending_event);
 	ClassDB::bind_method(D_METHOD("finish_transaction"), &InAppStore::finish_transaction);
 	ClassDB::bind_method(D_METHOD("set_auto_finish_transaction"), &InAppStore::set_auto_finish_transaction);
 
