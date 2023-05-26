@@ -37,6 +37,8 @@ public:
 	void finish_transaction(String product_id);
 	void set_auto_finish_transaction(bool b);
 	
+	bool if_purchased(String product_id);
+	int get_total_purchases();
 	void _record_purchase(String product_id);
 
 	static InAppStore *get_singleton();

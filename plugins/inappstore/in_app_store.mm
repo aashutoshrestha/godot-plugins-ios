@@ -43,6 +43,7 @@ InAppStore *InAppStore::instance = NULL;
 - (void)performRequestWithProductIDs:(NSSet *)productIDs;
 - (Error)purchaseProductWithProductID:(NSString *)productID;
 - (void)reset;
+- (void)restore;
 
 @end
 
@@ -61,6 +62,10 @@ InAppStore *InAppStore::instance = NULL;
 - (void)godot_commonInit {
 	self.loadedProducts = [NSMutableArray new];
 	self.pendingRequests = [NSMutableArray new];
+}
+
+-(void)restore {
+	[[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
 }
 
 - (void)performRequestWithProductIDs:(NSSet *)productIDs {
@@ -334,6 +339,8 @@ void InAppStore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("request_product_info"), &InAppStore::request_product_info);
 	ClassDB::bind_method(D_METHOD("restore_purchases"), &InAppStore::restore_purchases);
 	ClassDB::bind_method(D_METHOD("purchase"), &InAppStore::purchase);
+	ClassDB::bind_method(D_METHOD("if_purchased"), &InAppStore::if_purchased);
+	ClassDB::bind_method(D_METHOD("get_total_purchases"), &InAppStore::get_total_purchases);
 
 	ClassDB::bind_method(D_METHOD("finish_transaction"), &InAppStore::finish_transaction);
 	ClassDB::bind_method(D_METHOD("set_auto_finish_transaction"), &InAppStore::set_auto_finish_transaction);
@@ -366,7 +373,9 @@ Error InAppStore::request_product_info(Dictionary p_params) {
 
 Error InAppStore::restore_purchases() {
 	printf("restoring purchases!\n");
-	[[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+	// [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+	// [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+	[products_request_delegate restore];
 
 	return OK;
 }
@@ -383,6 +392,35 @@ Error InAppStore::purchase(Dictionary p_params) {
 	NSString *pid = [[NSString alloc] initWithUTF8String:String(p_params["product_id"]).utf8().get_data()];
 
 	return [products_request_delegate purchaseProductWithProductID:pid];
+}
+
+int InAppStore::get_total_purchases() {
+	// Get the standard UserDefaults instance
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    
+    // Get all keys from UserDefaults
+    NSArray *allKeys = [[userDefaults dictionaryRepresentation] allKeys];
+    
+    // Initialize a counter for matching values
+    NSInteger count = 0;
+    
+    // Iterate through each key and check if it contains the search string
+    for (NSString *key in allKeys) {
+        if ([key isKindOfClass:[NSString class]] && [key rangeOfString:@"purchased/"].location != NSNotFound) {
+            id value = [userDefaults objectForKey:key];
+            if (value != nil) {
+                count++;
+            }
+        }
+    }
+    
+    return count;
+}
+
+bool InAppStore::if_purchased(String product_id) {
+	String skey = "purchased/" + product_id;
+	NSString *key = [[NSString alloc] initWithUTF8String:skey.utf8().get_data()];
+	return [[NSUserDefaults standardUserDefaults] boolForKey:key];
 }
 
 void InAppStore::_record_purchase(String product_id) {
